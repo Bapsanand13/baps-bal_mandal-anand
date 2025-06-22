@@ -8,9 +8,11 @@ import {
   AlertCircle,
   Info,
   Trash2,
-  Loader2
+  Loader2,
+  LogIn
 } from 'lucide-react';
 import { notificationsAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -18,10 +20,17 @@ const Notifications = () => {
   const [sortBy, setSortBy] = useState('date');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { user, isAuthenticated } = useAuth();
 
   // Fetch notifications from backend
   useEffect(() => {
     const fetchNotifications = async () => {
+      // Only fetch if user is authenticated
+      if (!isAuthenticated) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
@@ -29,17 +38,23 @@ const Notifications = () => {
         setNotifications(notificationsData);
       } catch (err) {
         console.error('Error fetching notifications:', err);
-        setError('Failed to load notifications. Please try again later.');
+        if (err.message === 'No token provided') {
+          setError('Please log in to view notifications.');
+        } else {
+          setError('Failed to load notifications. Please try again later.');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchNotifications();
-  }, []);
+  }, [isAuthenticated]);
 
   // Auto-mark notifications as read when viewed
   useEffect(() => {
+    if (!isAuthenticated) return;
+    
     const unreadNotifications = notifications.filter(n => !n.isRead);
     if (unreadNotifications.length > 0) {
       // Mark notifications as read after 3 seconds
@@ -53,7 +68,7 @@ const Notifications = () => {
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [notifications]);
+  }, [notifications, isAuthenticated]);
 
   const getNotificationIcon = (type) => {
     switch (type) {
@@ -138,6 +153,35 @@ const Notifications = () => {
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
           <p className="text-gray-600">Loading notifications...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login prompt for unauthenticated users
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-4">
+          <LogIn className="w-16 h-16 mx-auto mb-6 text-orange-500" />
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">Login Required</h1>
+          <p className="text-lg text-gray-600 mb-6">
+            Please log in to view your notifications and stay updated with the latest announcements.
+          </p>
+          <div className="space-y-3">
+            <button 
+              onClick={() => window.location.href = '/login'} 
+              className="w-full px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors duration-200 font-semibold"
+            >
+              Go to Login
+            </button>
+            <button 
+              onClick={() => window.location.href = '/register'} 
+              className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-semibold"
+            >
+              Create Account
+            </button>
+          </div>
         </div>
       </div>
     );
