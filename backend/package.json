@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon server.js",
+    "dev:clean": "node dev-start.js",
     "build": "echo 'Backend build completed'",
     "setup": "node scripts/setup.js",
     "test": "echo \"No tests specified yet\" && exit 0",
