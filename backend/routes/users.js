@@ -3,11 +3,15 @@ import {
   getProfile, 
   updateProfile, 
   getAllUsers, 
-  updateUserRole 
+  updateUserRole,
+  getCommunityMembers
 } from '../controllers/userController.js';
 import { protect, admin } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Public routes
+router.get('/community', getCommunityMembers);
 
 // Protected routes
 router.get('/profile', protect, getProfile);

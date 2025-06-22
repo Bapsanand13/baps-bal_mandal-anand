@@ -7,14 +7,23 @@ import {
   Trophy, 
   Award,
   Play,
-  Heart
+  Heart,
+  Loader2
 } from 'lucide-react';
+import { eventsAPI, postsAPI, achievementsAPI } from '../services/api';
 
 const Home = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [currentAchievement, setCurrentAchievement] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // State for dynamic data
+  const [events, setEvents] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [achievements, setAchievements] = useState([]);
 
-  // Hero slider data
+  // Hero slider data (this can stay static as it's promotional content)
   const heroSlides = [
     {
       id: 1,
@@ -36,93 +45,35 @@ const Home = () => {
     }
   ];
 
-  // Sample balak data
-  const balakData = [
-    {
-      id: 1,
-      name: 'Rahul Patel',
-      age: 12,
-      mandal: 'Kishore Mandal',
-      grade: '7th Grade',
-      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80'
-    },
-    {
-      id: 2,
-      name: 'Priya Sharma',
-      age: 10,
-      mandal: 'Balika Mandal',
-      grade: '5th Grade',
-      photo: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80'
-    }
-  ];
+  // Fetch data from backend
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Fetch recent events
+        const eventsData = await eventsAPI.getEvents({ limit: 3, status: 'upcoming' });
+        setEvents(eventsData);
+        
+        // Fetch recent posts
+        const postsData = await postsAPI.getPosts({ limit: 3 });
+        setPosts(postsData);
+        
+        // Fetch recent achievements
+        const achievementsData = await achievementsAPI.getRecentAchievements(5);
+        setAchievements(achievementsData);
+        
+      } catch (err) {
+        console.error('Error fetching home data:', err);
+        setError('Failed to load data. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Sample parent data
-  const parentData = [
-    {
-      id: 1,
-      guardianName: 'Rajesh Patel',
-      contact: '+91 98765 43210',
-      sevaRole: 'Sabha Coordinator',
-      childName: 'Rahul Patel'
-    },
-    {
-      id: 2,
-      guardianName: 'Sunita Sharma',
-      contact: '+91 98765 43211',
-      sevaRole: 'Cultural Committee',
-      childName: 'Priya Sharma'
-    }
-  ];
-
-  // Sample achievements
-  const achievements = [
-    {
-      id: 1,
-      title: 'Bhagavad Gita Competition',
-      description: 'First Prize in Regional Level',
-      icon: Trophy,
-      color: 'text-yellow-500'
-    },
-    {
-      id: 2,
-      title: 'Cultural Performance',
-      description: 'Best Dance Performance Award',
-      icon: Star,
-      color: 'text-blue-500'
-    },
-    {
-      id: 3,
-      title: 'Academic Excellence',
-      description: 'Top 10 in School',
-      icon: Award,
-      color: 'text-green-500'
-    }
-  ];
-
-  // Sample talent show videos
-  const talentVideos = [
-    {
-      id: 1,
-      title: 'Classical Dance Performance',
-      performer: 'Priya Sharma',
-      thumbnail: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
-      likes: 45
-    },
-    {
-      id: 2,
-      title: 'Bhajan Singing',
-      performer: 'Rahul Patel',
-      thumbnail: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
-      likes: 32
-    },
-    {
-      id: 3,
-      title: 'Drawing Competition',
-      performer: 'Aarav Mehta',
-      thumbnail: 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80',
-      likes: 28
-    }
-  ];
+    fetchData();
+  }, []);
 
   // Auto-rotate hero slider
   useEffect(() => {
@@ -134,10 +85,12 @@ const Home = () => {
 
   // Auto-rotate achievements
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentAchievement((prev) => (prev + 1) % achievements.length);
-    }, 3000);
-    return () => clearInterval(timer);
+    if (achievements.length > 0) {
+      const timer = setInterval(() => {
+        setCurrentAchievement((prev) => (prev + 1) % achievements.length);
+      }, 3000);
+      return () => clearInterval(timer);
+    }
   }, [achievements.length]);
 
   const nextSlide = () => {
@@ -147,6 +100,69 @@ const Home = () => {
   const prevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
   };
+
+  // Helper function to get icon based on achievement category
+  const getAchievementIcon = (category) => {
+    switch (category) {
+      case 'academic':
+        return Award;
+      case 'cultural':
+        return Star;
+      case 'sports':
+        return Trophy;
+      case 'spiritual':
+        return Star;
+      case 'community':
+        return Heart;
+      default:
+        return Trophy;
+    }
+  };
+
+  // Helper function to get color based on achievement level
+  const getAchievementColor = (level) => {
+    switch (level) {
+      case 'international':
+        return 'text-purple-500';
+      case 'national':
+        return 'text-red-500';
+      case 'state':
+        return 'text-blue-500';
+      case 'regional':
+        return 'text-green-500';
+      case 'local':
+        return 'text-yellow-500';
+      default:
+        return 'text-orange-500';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+          <p className="text-gray-600">Loading community data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
@@ -193,13 +209,13 @@ const Home = () => {
         {/* Slider Controls */}
         <button
           onClick={prevSlide}
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all duration-200"
+          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-black p-2 rounded-full transition-all duration-200"
         >
           <ChevronLeft size={24} />
         </button>
         <button
           onClick={nextSlide}
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all duration-200"
+          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-black p-2 rounded-full transition-all duration-200"
         >
           <ChevronRight size={24} />
         </button>
@@ -220,120 +236,95 @@ const Home = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Balak & Parent Info Grid */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">
-            Our Community
-          </h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Balak Info Cards */}
-            <div className="space-y-4">
-              <h3 className="text-2xl font-semibold text-orange-600 mb-6">Balak Information</h3>
-              {balakData.map((balak) => (
-                <motion.div
-                  key={balak.id}
-                  className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200"
-                  whileHover={{ y: -2 }}
-                >
-                  <div className="flex items-center space-x-4">
-                    <img
-                      src={balak.photo}
-                      alt={balak.name}
-                      className="w-16 h-16 rounded-full object-cover"
-                    />
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-800">{balak.name}</h4>
-                      <p className="text-gray-600">Age: {balak.age} years</p>
-                      <p className="text-gray-600">Mandal: {balak.mandal}</p>
-                      <p className="text-gray-600">Grade: {balak.grade}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Parent Info Cards */}
-            <div className="space-y-4">
-              <h3 className="text-2xl font-semibold text-orange-600 mb-6">Parent Information</h3>
-              {parentData.map((parent) => (
-                <motion.div
-                  key={parent.id}
-                  className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200"
-                  whileHover={{ y: -2 }}
-                >
-                  <div className="space-y-2">
-                    <h4 className="text-lg font-semibold text-gray-800">{parent.guardianName}</h4>
-                    <p className="text-gray-600">Child: {parent.childName}</p>
-                    <p className="text-gray-600">Contact: {parent.contact}</p>
-                    <p className="text-gray-600">Seva Role: {parent.sevaRole}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* Achievements Carousel */}
         <section className="mb-16">
           <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">
             Recent Achievements
           </h2>
-          <div className="relative h-64 bg-white rounded-lg shadow-lg overflow-hidden">
-            {achievements.map((achievement, index) => {
-              const Icon = achievement.icon;
-              return (
-                <motion.div
-                  key={achievement.id}
-                  className={`absolute inset-0 flex items-center justify-center ${
-                    index === currentAchievement ? 'opacity-100' : 'opacity-0'
-                  }`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: index === currentAchievement ? 1 : 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <div className="text-center">
-                    <Icon className={`w-16 h-16 mx-auto mb-4 ${achievement.color}`} />
-                    <h3 className="text-2xl font-bold text-gray-800 mb-2">{achievement.title}</h3>
-                    <p className="text-lg text-gray-600">{achievement.description}</p>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
+          {achievements.length > 0 ? (
+            <div className="relative h-64 bg-white rounded-lg shadow-lg overflow-hidden">
+              {achievements.map((achievement, index) => {
+                const Icon = getAchievementIcon(achievement.category);
+                return (
+                  <motion.div
+                    key={achievement._id || achievement.id}
+                    className={`absolute inset-0 flex items-center justify-center ${
+                      index === currentAchievement ? 'opacity-100' : 'opacity-0'
+                    }`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: index === currentAchievement ? 1 : 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <div className="text-center px-6">
+                      <Icon className={`w-16 h-16 mx-auto mb-4 ${getAchievementColor(achievement.level)}`} />
+                      <h3 className="text-2xl font-bold text-gray-800 mb-2">{achievement.title}</h3>
+                      <p className="text-lg text-gray-600 mb-2">{achievement.description}</p>
+                      {achievement.position && (
+                        <p className="text-sm text-orange-600 font-medium">{achievement.position}</p>
+                      )}
+                      {achievement.participants && achievement.participants.length > 0 && (
+                        <p className="text-sm text-gray-500 mt-1">
+                          Participants: {achievement.participants.map(p => p.name).join(', ')}
+                        </p>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-white rounded-lg shadow-lg">
+              <Trophy className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">No achievements yet</h3>
+              <p className="text-gray-500">
+                Our community achievements will be displayed here once they are added.
+              </p>
+            </div>
+          )}
         </section>
 
         {/* Talent Show Section */}
         <section>
           <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">
-            Talent Show Highlights
+            Recent Posts
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
-            {talentVideos.map((video) => (
-              <motion.div
-                key={video.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"
-                whileHover={{ y: -4 }}
-              >
-                <div className="relative">
-                  <img
-                    src={video.thumbnail}
-                    alt={video.title}
-                    className="w-full h-48 object-cover"
-                  />
-                  <button className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 hover:bg-opacity-50 transition-all duration-200">
-                    <Play className="w-12 h-12 text-white" />
-                  </button>
-                </div>
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-1">{video.title}</h3>
-                  <p className="text-gray-600 mb-2">by {video.performer}</p>
-                  <div className="flex items-center space-x-1 text-red-500">
-                    <Heart size={16} />
-                    <span className="text-sm">{video.likes}</span>
+            {posts.length > 0 ? (
+              posts.slice(0, 3).map((post) => (
+                <motion.div
+                  key={post._id || post.id}
+                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"
+                  whileHover={{ y: -4 }}
+                >
+                  <div className="relative">
+                    <img
+                      src={post.image || 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'}
+                      alt={post.title || 'Post'}
+                      className="w-full h-48 object-cover"
+                    />
+                    <button className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 hover:bg-opacity-50 transition-all duration-200">
+                      <Play className="w-12 h-12 text-white" />
+                    </button>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                      {post.title || 'Community Post'}
+                    </h3>
+                    <p className="text-gray-600 mb-2">
+                      by {post.author?.name || post.author || 'Community Member'}
+                    </p>
+                    <div className="flex items-center space-x-1 text-red-500">
+                      <Heart size={16} />
+                      <span className="text-sm">{post.likes || 0}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <div className="col-span-3 text-center py-8 text-gray-500">
+                <p>No recent posts found</p>
+              </div>
+            )}
           </div>
         </section>
       </div>

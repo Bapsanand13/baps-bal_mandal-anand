@@ -24,8 +24,8 @@ const Login = () => {
     name: '',
     phone: '',
     age: '',
-    parentName: '',
-    parentPhone: ''
+    guardianName: '',
+    mandal: ''
   });
   
   const navigate = useNavigate();
@@ -61,8 +61,8 @@ const Login = () => {
           password: formData.password,
           phone: formData.phone,
           age: parseInt(formData.age),
-          parentName: formData.parentName,
-          parentPhone: formData.parentPhone
+          guardianName: formData.guardianName,
+          mandal: formData.mandal
         });
       }
 
@@ -78,8 +78,8 @@ const Login = () => {
             name: '',
             phone: '',
             age: '',
-            parentName: '',
-            parentPhone: ''
+            guardianName: '',
+            mandal: ''
           });
         }
       }
@@ -260,43 +260,44 @@ const Login = () => {
                   </div>
                 </div>
 
-                {/* Parent Name */}
+                {/* Guardian Name */}
                 <div>
-                  <label htmlFor="parentName" className="block text-sm font-medium text-gray-700 mb-2">
-                    Parent/Guardian Name
+                  <label htmlFor="guardianName" className="block text-sm font-medium text-gray-700 mb-2">
+                    Guardian Name
                   </label>
                   <input
-                    id="parentName"
-                    name="parentName"
+                    id="guardianName"
+                    name="guardianName"
                     type="text"
                     required
-                    value={formData.parentName}
+                    value={formData.guardianName}
                     onChange={handleInputChange}
                     className="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    placeholder="Enter parent/guardian name"
+                    placeholder="Enter guardian name"
                   />
                 </div>
 
-                {/* Parent Phone */}
+                {/* Mandal */}
                 <div>
-                  <label htmlFor="parentPhone" className="block text-sm font-medium text-gray-700 mb-2">
-                    Parent/Guardian Phone
+                  <label htmlFor="mandal" className="block text-sm font-medium text-gray-700 mb-2">
+                    Mandal
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Phone className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="parentPhone"
-                      name="parentPhone"
-                      type="tel"
-                      required
-                      value={formData.parentPhone}
-                      onChange={handleInputChange}
-                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      placeholder="Enter parent/guardian phone"
-                    />
-                  </div>
+                  <select
+                    id="mandal"
+                    name="mandal"
+                    required
+                    value={formData.mandal}
+                    onChange={handleInputChange}
+                    className="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  >
+                    <option value="">Select your mandal</option>
+                    <option value="Bal Mandal">Bal Mandal</option>
+                    <option value="Kishore Mandal">Kishore Mandal</option>
+                    <option value="Balika Mandal">Balika Mandal</option>
+                    <option value="Kishori Mandal">Kishori Mandal</option>
+                    <option value="Yuva Mandal">Yuva Mandal</option>
+                    <option value="Mahila Mandal">Mahila Mandal</option>
+                  </select>
                 </div>
               </>
             )}
@@ -335,8 +336,8 @@ const Login = () => {
                     name: '',
                     phone: '',
                     age: '',
-                    parentName: '',
-                    parentPhone: ''
+                    guardianName: '',
+                    mandal: ''
                   });
                 }}
                 className="text-orange-600 hover:text-orange-700 font-medium"

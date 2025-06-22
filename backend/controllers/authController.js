@@ -7,7 +7,7 @@ import User from '../models/User.js';
 // @access  Public
 export const register = async (req, res) => {
   try {
-    const { name, email, password, phone, age, parentName, parentPhone } = req.body;
+    const { name, email, password, phone, age, guardianName, mandal } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -26,8 +26,8 @@ export const register = async (req, res) => {
       password: hashedPassword,
       phone,
       age,
-      parentName,
-      parentPhone
+      guardianName,
+      mandal
     });
 
     await user.save();
@@ -49,8 +49,8 @@ export const register = async (req, res) => {
         role: user.role,
         phone: user.phone,
         age: user.age,
-        parentName: user.parentName,
-        parentPhone: user.parentPhone
+        guardianName: user.guardianName,
+        mandal: user.mandal
       }
     });
   } catch (error) {
@@ -95,8 +95,8 @@ export const login = async (req, res) => {
         role: user.role,
         phone: user.phone,
         age: user.age,
-        parentName: user.parentName,
-        parentPhone: user.parentPhone
+        guardianName: user.guardianName,
+        mandal: user.mandal
       }
     });
   } catch (error) {

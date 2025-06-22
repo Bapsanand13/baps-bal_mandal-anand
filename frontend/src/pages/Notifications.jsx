@@ -7,77 +7,49 @@ import {
   CheckCircle,
   AlertCircle,
   Info,
-  Trash2
+  Trash2,
+  Loader2
 } from 'lucide-react';
+import { notificationsAPI } from '../services/api';
 
 const Notifications = () => {
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: 'Bhagavad Gita Competition Registration Open',
-      description: 'Registration for the annual Bhagavad Gita competition is now open. All participants must register by February 10th, 2024.',
-      type: 'important',
-      date: '2024-02-01T10:00:00Z',
-      isRead: false,
-      priority: 'high'
-    },
-    {
-      id: 2,
-      title: 'Cultural Performance Night Schedule',
-      description: 'The cultural performance night will be held on February 20th at 6:00 PM. All participants please arrive 30 minutes early for rehearsal.',
-      type: 'event',
-      date: '2024-02-01T09:30:00Z',
-      isRead: false,
-      priority: 'medium'
-    },
-    {
-      id: 3,
-      title: 'New Spiritual Workshop Series',
-      description: 'We are starting a new series of spiritual workshops every Sunday. Topics will include meditation, yoga, and moral values.',
-      type: 'info',
-      date: '2024-01-30T15:00:00Z',
-      isRead: true,
-      priority: 'medium'
-    },
-    {
-      id: 4,
-      title: 'Annual Sports Day Results',
-      description: 'Congratulations to all participants! The results of the annual sports day competition have been announced. Check the notice board for details.',
-      type: 'success',
-      date: '2024-01-29T14:00:00Z',
-      isRead: true,
-      priority: 'low'
-    },
-    {
-      id: 5,
-      title: 'Parent Meeting Reminder',
-      description: 'Monthly parent meeting will be held this Saturday at 4:00 PM. All parents are requested to attend for important updates.',
-      type: 'reminder',
-      date: '2024-01-28T11:00:00Z',
-      isRead: false,
-      priority: 'high'
-    },
-    {
-      id: 6,
-      title: 'Library Hours Extended',
-      description: 'The BAPS library will now be open from 9:00 AM to 8:00 PM on weekdays. Students can use this time for study and research.',
-      type: 'info',
-      date: '2024-01-27T16:00:00Z',
-      isRead: true,
-      priority: 'low'
-    }
-  ]);
-
+  const [notifications, setNotifications] = useState([]);
   const [filter, setFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch notifications from backend
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const notificationsData = await notificationsAPI.getNotifications();
+        setNotifications(notificationsData);
+      } catch (err) {
+        console.error('Error fetching notifications:', err);
+        setError('Failed to load notifications. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
 
   // Auto-mark notifications as read when viewed
   useEffect(() => {
     const unreadNotifications = notifications.filter(n => !n.isRead);
     if (unreadNotifications.length > 0) {
-      // Simulate auto-marking as read after 3 seconds
-      const timer = setTimeout(() => {
-        setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+      // Mark notifications as read after 3 seconds
+      const timer = setTimeout(async () => {
+        try {
+          await notificationsAPI.markAllAsRead();
+          setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+        } catch (err) {
+          console.error('Error marking notifications as read:', err);
+        }
       }, 3000);
       return () => clearTimeout(timer);
     }
@@ -116,28 +88,30 @@ const Notifications = () => {
     const now = new Date();
     const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
     
-    if (diffInHours < 1) {
-      return 'Just now';
-    } else if (diffInHours < 24) {
-      return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
-    } else {
-      const diffInDays = Math.floor(diffInHours / 24);
-      return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    if (diffInHours < 48) return 'Yesterday';
+    return date.toLocaleDateString();
+  };
+
+  const handleMarkAsRead = async (notificationId) => {
+    try {
+      await notificationsAPI.markAsRead(notificationId);
+      setNotifications(notifications.map(n => 
+        n._id === notificationId ? { ...n, isRead: true } : n
+      ));
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
     }
   };
 
-  const markAsRead = (notificationId) => {
-    setNotifications(notifications.map(n => 
-      n.id === notificationId ? { ...n, isRead: true } : n
-    ));
-  };
-
-  const deleteNotification = (notificationId) => {
-    setNotifications(notifications.filter(n => n.id !== notificationId));
-  };
-
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+  const handleDeleteNotification = async (notificationId) => {
+    try {
+      await notificationsAPI.deleteNotification(notificationId);
+      setNotifications(notifications.filter(n => n._id !== notificationId));
+    } catch (err) {
+      console.error('Error deleting notification:', err);
+    }
   };
 
   // Filter and sort notifications
@@ -149,14 +123,41 @@ const Notifications = () => {
     })
     .sort((a, b) => {
       if (sortBy === 'date') {
-        return new Date(b.date) - new Date(a.date);
+        return new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date);
       }
       if (sortBy === 'priority') {
         const priorityOrder = { high: 3, medium: 2, low: 1 };
-        return priorityOrder[b.priority] - priorityOrder[a.priority];
+        return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
       }
       return 0;
     });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+          <p className="text-gray-600">Loading notifications...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -188,7 +189,7 @@ const Notifications = () => {
             <div className="flex items-center space-x-3">
               {unreadCount > 0 && (
                 <button
-                  onClick={markAllAsRead}
+                  onClick={() => notificationsAPI.markAllAsRead()}
                   className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200 text-sm"
                 >
                   Mark All as Read
@@ -259,7 +260,7 @@ const Notifications = () => {
         <div className="space-y-4">
           {filteredNotifications.map((notification) => (
             <motion.div
-              key={notification.id}
+              key={notification._id}
               className={`bg-white rounded-lg shadow-md border-l-4 ${getPriorityColor(notification.priority)} ${
                 !notification.isRead ? 'ring-2 ring-orange-200' : ''
               }`}
@@ -291,7 +292,7 @@ const Notifications = () => {
                       <div className="flex items-center space-x-4 text-sm text-gray-500">
                         <div className="flex items-center space-x-1">
                           <Clock size={14} />
-                          <span>{formatDate(notification.date)}</span>
+                          <span>{formatDate(notification.createdAt || notification.date)}</span>
                         </div>
                         <div className="flex items-center space-x-1">
                           <Star size={14} />
@@ -304,7 +305,7 @@ const Notifications = () => {
                   <div className="flex items-center space-x-2">
                     {!notification.isRead && (
                       <button
-                        onClick={() => markAsRead(notification.id)}
+                        onClick={() => handleMarkAsRead(notification._id)}
                         className="p-2 text-gray-400 hover:text-green-600 transition-colors duration-200"
                         title="Mark as read"
                       >
@@ -312,7 +313,7 @@ const Notifications = () => {
                       </button>
                     )}
                     <button
-                      onClick={() => deleteNotification(notification.id)}
+                      onClick={() => handleDeleteNotification(notification._id)}
                       className="p-2 text-gray-400 hover:text-red-600 transition-colors duration-200"
                       title="Delete notification"
                     >

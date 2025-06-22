@@ -56,6 +56,23 @@ export const updateProfile = async (req, res) => {
   }
 };
 
+// @desc    Get community members (Public)
+// @route   GET /api/users/community
+// @access  Public
+export const getCommunityMembers = async (req, res) => {
+  try {
+    const users = await User.find()
+      .select('name age mandal photo guardianName phone')
+      .sort({ createdAt: -1 })
+      .limit(10); // Limit to 10 members for home page
+    
+    res.json(users);
+  } catch (error) {
+    console.error('Get community members error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // @desc    Get all users (Admin only)
 // @route   GET /api/users
 // @access  Private/Admin

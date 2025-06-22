@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   MapPin, 
@@ -10,33 +10,34 @@ import {
   BookOpen, 
   Music,
   Award,
-  Target
+  Target,
+  Loader2
 } from 'lucide-react';
+import { mentorsAPI } from '../services/api';
 
 const About = () => {
-  const mentors = [
-    {
-      id: 1,
-      name: 'Swami Ji',
-      role: 'Spiritual Guide',
-      image: 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
-      description: 'Leading spiritual discourses and guiding children on the path of dharma.'
-    },
-    {
-      id: 2,
-      name: 'Rajesh Patel',
-      role: 'Sabha Coordinator',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
-      description: 'Organizing weekly sabhas and coordinating various activities.'
-    },
-    {
-      id: 3,
-      name: 'Sunita Sharma',
-      role: 'Cultural Coordinator',
-      image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
-      description: 'Teaching classical dance, music, and cultural activities.'
-    }
-  ];
+  const [mentors, setMentors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch mentors from backend
+  useEffect(() => {
+    const fetchMentors = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const mentorsData = await mentorsAPI.getMentors();
+        setMentors(mentorsData);
+      } catch (err) {
+        console.error('Error fetching mentors:', err);
+        setError('Failed to load mentors. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMentors();
+  }, []);
 
   const activities = [
     {
@@ -79,6 +80,33 @@ const About = () => {
     'Technical Support',
     'Social Media Management'
   ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+          <p className="text-gray-600">Loading about page...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-8">
@@ -174,27 +202,50 @@ const About = () => {
         <section className="mb-16">
           <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Our Mentors</h2>
           <div className="grid md:grid-cols-3 gap-8">
-            {mentors.map((mentor, index) => (
-              <motion.div
-                key={mentor.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{ y: -4 }}
-              >
-                <img
-                  src={mentor.image}
-                  alt={mentor.name}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">{mentor.name}</h3>
-                  <p className="text-orange-600 font-medium mb-3">{mentor.role}</p>
-                  <p className="text-gray-600">{mentor.description}</p>
+            {mentors.length > 0 ? (
+              mentors.map((mentor, index) => (
+                <motion.div
+                  key={mentor._id || mentor.id}
+                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  whileHover={{ y: -4 }}
+                >
+                  <img
+                    src={mentor.image || 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80'}
+                    alt={mentor.name || 'Mentor'}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                      {mentor.name || 'Mentor Name'}
+                    </h3>
+                    <p className="text-orange-600 font-medium mb-3">
+                      {mentor.role || 'Mentor Role'}
+                    </p>
+                    <p className="text-gray-600">
+                      {mentor.description || 'No description available'}
+                    </p>
+                    {mentor.experience && (
+                      <p className="text-sm text-gray-500 mt-2">
+                        Experience: {mentor.experience} years
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <div className="text-gray-400 mb-4">
+                  <Users size={64} className="mx-auto" />
                 </div>
-              </motion.div>
-            ))}
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">No mentors found</h3>
+                <p className="text-gray-500">
+                  Our mentor information will be available soon.
+                </p>
+              </div>
+            )}
           </div>
         </section>
 
@@ -289,19 +340,19 @@ const About = () => {
               {sevaOpportunities.map((opportunity, index) => (
                 <motion.div
                   key={index}
-                  className="bg-white bg-opacity-20 rounded-lg p-4 text-center hover:bg-opacity-30 transition-all duration-200"
+                  className="bg-white bg-opacity-20 rounded-lg p-4 text-center hover:bg-opacity-30 transition-all duration-200 border border-white border-opacity-30"
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3, delay: index * 0.1 }}
                   whileHover={{ scale: 1.05 }}
                 >
-                  <span className="font-medium">{opportunity}</span>
+                  <span className="text-black" style={{ textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)' }}>{opportunity}</span>
                 </motion.div>
               ))}
             </div>
 
             <div className="text-center mt-8">
-              <button className="bg-white text-orange-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200">
+              <button className="bg-white text-orange-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg">
                 Join Seva Team
               </button>
             </div>

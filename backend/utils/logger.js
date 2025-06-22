@@ -94,20 +94,25 @@ class Logger {
     const start = Date.now();
     
     res.on('finish', () => {
-      const duration = Date.now() - start;
-      const logData = {
-        method: req.method,
-        url: req.originalUrl,
-        status: res.statusCode,
-        duration: `${duration}ms`,
-        ip: req.ip,
-        userAgent: req.get('User-Agent')
-      };
+      try {
+        const duration = Date.now() - start;
+        const logData = {
+          method: req.method,
+          url: req.originalUrl,
+          status: res.statusCode,
+          duration: `${duration}ms`,
+          ip: req.ip,
+          userAgent: req.get('User-Agent')
+        };
 
-      if (res.statusCode >= 400) {
-        this.error(`${req.method} ${req.originalUrl} - ${res.statusCode}`, logData);
-      } else {
-        this.info(`${req.method} ${req.originalUrl} - ${res.statusCode}`, logData);
+        if (res.statusCode >= 400) {
+          logger.error(`${req.method} ${req.originalUrl} - ${res.statusCode}`, logData);
+        } else {
+          logger.info(`${req.method} ${req.originalUrl} - ${res.statusCode}`, logData);
+        }
+      } catch (error) {
+        // Fallback logging if there's an error in the logging itself
+        console.error('Logging error:', error);
       }
     });
 

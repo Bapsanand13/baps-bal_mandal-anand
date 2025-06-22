@@ -57,6 +57,9 @@ export const userAPI = {
     body: JSON.stringify(profileData),
   }),
 
+  // Get community members (public)
+  getCommunityMembers: () => apiRequest('/users/community'),
+
   // Get all users (admin only)
   getAllUsers: () => apiRequest('/users'),
 
@@ -205,6 +208,64 @@ export const notificationsAPI = {
   }),
 };
 
+// Mentors API
+export const mentorsAPI = {
+  // Get all mentors
+  getMentors: () => apiRequest('/mentors'),
+
+  // Get single mentor
+  getMentor: (mentorId) => apiRequest(`/mentors/${mentorId}`),
+
+  // Create mentor (admin only)
+  createMentor: (mentorData) => apiRequest('/mentors', {
+    method: 'POST',
+    body: JSON.stringify(mentorData),
+  }),
+
+  // Update mentor (admin only)
+  updateMentor: (mentorId, mentorData) => apiRequest(`/mentors/${mentorId}`, {
+    method: 'PUT',
+    body: JSON.stringify(mentorData),
+  }),
+
+  // Delete mentor (admin only)
+  deleteMentor: (mentorId) => apiRequest(`/mentors/${mentorId}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Achievements API
+export const achievementsAPI = {
+  // Get all achievements
+  getAchievements: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiRequest(`/achievements${queryString ? `?${queryString}` : ''}`);
+  },
+
+  // Get recent achievements
+  getRecentAchievements: (limit = 5) => apiRequest(`/achievements/recent?limit=${limit}`),
+
+  // Get single achievement
+  getAchievement: (achievementId) => apiRequest(`/achievements/${achievementId}`),
+
+  // Create achievement (admin only)
+  createAchievement: (achievementData) => apiRequest('/achievements', {
+    method: 'POST',
+    body: JSON.stringify(achievementData),
+  }),
+
+  // Update achievement (admin only)
+  updateAchievement: (achievementId, achievementData) => apiRequest(`/achievements/${achievementId}`, {
+    method: 'PUT',
+    body: JSON.stringify(achievementData),
+  }),
+
+  // Delete achievement (admin only)
+  deleteAchievement: (achievementId) => apiRequest(`/achievements/${achievementId}`, {
+    method: 'DELETE',
+  }),
+};
+
 // File upload API
 export const uploadAPI = {
   // Upload image to Cloudinary
@@ -243,5 +304,7 @@ export default {
   events: eventsAPI,
   posts: postsAPI,
   notifications: notificationsAPI,
+  mentors: mentorsAPI,
+  achievements: achievementsAPI,
   upload: uploadAPI,
 }; 

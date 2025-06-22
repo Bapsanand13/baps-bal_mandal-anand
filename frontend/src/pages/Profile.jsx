@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   User, 
@@ -16,77 +16,72 @@ import {
   Trash2,
   Settings,
   LogOut,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { userAPI, postsAPI, eventsAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
-  const [userData, setUserData] = useState({
-    name: 'Rahul Patel',
-    email: 'rahul.patel@example.com',
-    age: 12,
-    mandal: 'Kishore Mandal',
-    guardianName: 'Rajesh Patel',
-    phone: '+91 98765 43210',
-    photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
-    joinDate: '2023-01-15',
-    sevaRole: 'Sabha Coordinator'
-  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [editData, setEditData] = useState({});
+  const [userPosts, setUserPosts] = useState([]);
+  const [eventsJoined, setEventsJoined] = useState([]);
+  const { user, updateUser } = useAuth();
 
-  const [editData, setEditData] = useState({ ...userData });
+  // Fetch user data from backend
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Fetch user profile
+        const profileData = await userAPI.getProfile();
+        setUserData(profileData);
+        setEditData(profileData);
+        
+        // Fetch user posts
+        const postsData = await postsAPI.getPosts({ author: user?._id });
+        setUserPosts(postsData);
+        
+        // Fetch user events (this would need to be implemented in backend)
+        // For now, we'll use an empty array
+        setEventsJoined([]);
+        
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+        setError('Failed to load profile data. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Sample user posts
-  const userPosts = [
-    {
-      id: 1,
-      content: 'Today I learned about the importance of seva in our spiritual journey. It\'s amazing how helping others brings so much joy! 🙏✨',
-      image: 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-      likes: 24,
-      comments: 8,
-      timestamp: '2 hours ago'
-    },
-    {
-      id: 2,
-      content: 'My drawing for the spiritual art competition. I tried to capture the peace and harmony that I feel during our mandal activities. 🎨🕉️',
-      image: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-      likes: 31,
-      comments: 12,
-      timestamp: '5 hours ago'
+    if (user) {
+      fetchUserData();
     }
-  ];
-
-  // Sample events joined
-  const eventsJoined = [
-    {
-      id: 1,
-      title: 'Bhagavad Gita Competition',
-      date: '2024-02-15',
-      status: 'upcoming'
-    },
-    {
-      id: 2,
-      title: 'Cultural Performance Night',
-      date: '2024-02-20',
-      status: 'upcoming'
-    },
-    {
-      id: 3,
-      title: 'Annual Sports Day',
-      date: '2024-01-30',
-      status: 'completed'
-    }
-  ];
+  }, [user]);
 
   const handleEdit = () => {
     setEditData({ ...userData });
     setIsEditing(true);
   };
 
-  const handleSave = () => {
-    setUserData({ ...editData });
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      const updatedData = await userAPI.updateProfile(editData);
+      setUserData(updatedData);
+      updateUser(updatedData);
+      setIsEditing(false);
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      alert('Failed to update profile. Please try again.');
+    }
   };
 
   const handleCancel = () => {
@@ -116,9 +111,14 @@ const Profile = () => {
     }
   };
 
-  const deletePost = (postId) => {
-    // Here you would typically make an API call to delete the post
-    console.log('Deleting post:', postId);
+  const deletePost = async (postId) => {
+    try {
+      await postsAPI.deletePost(postId);
+      setUserPosts(userPosts.filter(post => post._id !== postId));
+    } catch (err) {
+      console.error('Error deleting post:', err);
+      alert('Failed to delete post. Please try again.');
+    }
   };
 
   const formatDate = (dateString) => {
@@ -128,6 +128,46 @@ const Profile = () => {
       day: 'numeric'
     });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+          <p className="text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">No profile data found</p>
+          <Link to="/login" className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
+            Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-8">
@@ -340,7 +380,7 @@ const Profile = () => {
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">My Posts</h3>
                     <div className="space-y-4">
                       {userPosts.map((post) => (
-                        <div key={post.id} className="border border-gray-200 rounded-lg p-4">
+                        <div key={post._id} className="border border-gray-200 rounded-lg p-4">
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center space-x-3">
                               <img
@@ -350,11 +390,11 @@ const Profile = () => {
                               />
                               <div>
                                 <h4 className="font-semibold text-gray-800">{userData.name}</h4>
-                                <p className="text-sm text-gray-500">{post.timestamp}</p>
+                                <p className="text-sm text-gray-500">{formatDate(post.timestamp)}</p>
                               </div>
                             </div>
                             <button
-                              onClick={() => deletePost(post.id)}
+                              onClick={() => deletePost(post._id)}
                               className="text-red-500 hover:text-red-700"
                             >
                               <Trash2 size={16} />
