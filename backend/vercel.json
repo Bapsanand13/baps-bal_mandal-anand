@@ -3,22 +3,19 @@
   "name": "baps-bal-mandal-backend",
   "builds": [
     {
-      "src": "backend/server.js",
+      "src": "server.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/backend/server.js"
+      "dest": "/server.js"
     }
   ],
-  "env": {
-    "NODE_ENV": "production"
-  },
   "functions": {
-    "backend/server.js": {
+    "server.js": {
       "maxDuration": 30
     }
   }
-}
+} 
