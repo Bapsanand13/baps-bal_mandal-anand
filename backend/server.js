@@ -55,12 +55,24 @@ app.get('/', (req, res) => {
     message: 'BAPS Bal Mandal API is running 🚀',
     version: '1.0.0',
     environment: config.server.nodeEnv,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    vercel: !!process.env.VERCEL
+  });
+});
+
+// Simple health check (no database required)
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: config.server.nodeEnv,
+    vercel: !!process.env.VERCEL
   });
 });
 
 // Database health check route
-app.get('/health', async (req, res) => {
+app.get('/health/db', async (req, res) => {
   try {
     const dbHealth = await healthCheck();
     res.json({
@@ -98,7 +110,7 @@ app.use(errorHandler);
 const startServer = async () => {
   try {
     // Connect to database
-    await connectDB();
+    const dbConnection = await connectDB();
     
     // Start server only if not on Vercel
     if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {

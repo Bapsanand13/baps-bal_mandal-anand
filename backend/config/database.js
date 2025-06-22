@@ -6,10 +6,25 @@ import config, { validateConfig } from './config.js';
 export const connectDB = async () => {
   try {
     // Validate required environment variables
-    validateConfig();
+    const isValid = validateConfig();
+    
+    if (!isValid && process.env.VERCEL) {
+      console.warn('Database connection skipped due to missing environment variables on Vercel');
+      return null;
+    }
     
     const MONGO_URI = config.database.uri;
     const connectOptions = config.database.options;
+
+    if (!MONGO_URI) {
+      console.error('MONGO_URI is not defined');
+      if (process.env.VERCEL) {
+        console.warn('Database connection skipped on Vercel due to missing MONGO_URI');
+        return null;
+      } else {
+        throw new Error('MONGO_URI is required');
+      }
+    }
 
     // Connect to MongoDB
     const conn = await mongoose.connect(MONGO_URI, connectOptions);
@@ -47,7 +62,12 @@ export const connectDB = async () => {
     return conn;
   } catch (error) {
     logger.error('Database connection failed:', error);
-    process.exit(1);
+    if (process.env.VERCEL) {
+      console.warn('Database connection failed on Vercel, but continuing...');
+      return null;
+    } else {
+      process.exit(1);
+    }
   }
 };
 

@@ -14,7 +14,15 @@ const config = {
   // Database configuration
   database: {
     uri: process.env.MONGO_URI,
-   
+    options: {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      bufferMaxEntries: 0,
+      bufferCommands: false,
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    }
   },
 
   // JWT configuration
@@ -78,8 +86,17 @@ export const validateConfig = () => {
   const missing = required.filter(key => !process.env[key]);
   
   if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+    console.error(`Missing required environment variables: ${missing.join(', ')}`);
+    // Don't throw error on Vercel, just log it
+    if (process.env.VERCEL) {
+      console.warn('Running on Vercel with missing environment variables. Some features may not work.');
+      return false;
+    } else {
+      throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+    }
   }
+  
+  return true;
 };
 
 // Get configuration for specific environment
