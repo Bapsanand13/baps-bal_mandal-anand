@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "name": "baps-bal-mandal-test",
+  "builds": [
+    {
+      "src": "test-server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/test-server.js"
+    }
+  ]
+} 

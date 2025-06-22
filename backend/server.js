@@ -17,7 +17,6 @@ import achievementRoutes from './routes/achievements.js';
 
 // Import utilities
 import { errorHandler, notFound } from './utils/errorHandler.js';
-import logger, { logRequest } from './utils/logger.js';
 
 // Import configuration
 import config from './config/config.js';
@@ -25,6 +24,11 @@ import { connectDB, healthCheck } from './config/database.js';
 
 const app = express();
 
+// Simple logging middleware for Vercel
+const logRequest = (req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+};
 
 // Security middleware
 app.use(helmet());
@@ -32,12 +36,15 @@ app.use(mongoSanitize());
 app.use(xss());
 
 // Rate limiting
-const limiter = rateLimit(config.rateLimit);
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
 app.use('/api/', limiter);
 
 // CORS configuration
 app.use(cors({ 
-  origin: config.server.frontendUrl,
+  origin: process.env.FRONTEND_URL || 'http://localhost:5174',
   credentials: true 
 }));
 
@@ -54,7 +61,7 @@ app.get('/', (req, res) => {
   res.json({
     message: 'BAPS Bal Mandal API is running 🚀',
     version: '1.0.0',
-    environment: config.server.nodeEnv,
+    environment: process.env.NODE_ENV || 'development',
     timestamp: new Date().toISOString(),
     vercel: !!process.env.VERCEL
   });
@@ -66,7 +73,7 @@ app.get('/health', (req, res) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: config.server.nodeEnv,
+    environment: process.env.NODE_ENV || 'development',
     vercel: !!process.env.VERCEL
   });
 });
@@ -80,7 +87,7 @@ app.get('/health/db', async (req, res) => {
       timestamp: new Date().toISOString(),
       database: dbHealth,
       uptime: process.uptime(),
-      environment: config.server.nodeEnv
+      environment: process.env.NODE_ENV || 'development'
     });
   } catch (error) {
     res.status(500).json({
@@ -109,17 +116,22 @@ app.use(errorHandler);
 // Start server
 const startServer = async () => {
   try {
-    // Connect to database
-    const dbConnection = await connectDB();
+    // Connect to database (don't fail if it doesn't work)
+    try {
+      await connectDB();
+    } catch (dbError) {
+      console.warn('Database connection failed, but continuing:', dbError.message);
+    }
     
     // Start server only if not on Vercel
     if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-      app.listen(config.server.port, () => {
-        logger.info(`Server running on port ${config.server.port} in ${config.server.nodeEnv} mode`);
+      const port = process.env.PORT || 5000;
+      app.listen(port, () => {
+        console.log(`Server running on port ${port} in ${process.env.NODE_ENV || 'development'} mode`);
       });
     }
   } catch (error) {
-    logger.error('Failed to start server:', error);
+    console.error('Failed to start server:', error);
     if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
       process.exit(1);
     }
@@ -128,7 +140,7 @@ const startServer = async () => {
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
-  logger.error('Unhandled Promise Rejection:', err);
+  console.error('Unhandled Promise Rejection:', err);
   if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
     process.exit(1);
   }
@@ -136,7 +148,7 @@ process.on('unhandledRejection', (err) => {
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
-  logger.error('Uncaught Exception:', err);
+  console.error('Uncaught Exception:', err);
   if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
     process.exit(1);
   }
