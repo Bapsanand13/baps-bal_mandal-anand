@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { 
   Bell, 
   Clock, 
@@ -21,6 +22,7 @@ const Notifications = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   // Fetch notifications from backend
   useEffect(() => {
@@ -166,20 +168,15 @@ const Notifications = () => {
           <LogIn className="w-16 h-16 mx-auto mb-6 text-orange-500" />
           <h1 className="text-3xl font-bold text-gray-800 mb-4">Login Required</h1>
           <p className="text-lg text-gray-600 mb-6">
-            Please log in to view your notifications and stay updated with the latest announcements.
+            Please log in to view your notifications and stay updated with the latest announcements. 
+            New users can create an account from the login page.
           </p>
           <div className="space-y-3">
             <button 
-              onClick={() => window.location.href = '/login'} 
+              onClick={() => navigate('/login')} 
               className="w-full px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors duration-200 font-semibold"
             >
               Go to Login
-            </button>
-            <button 
-              onClick={() => window.location.href = '/register'} 
-              className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 font-semibold"
-            >
-              Create Account
             </button>
           </div>
         </div>
