@@ -12,7 +12,6 @@ Go to your Vercel dashboard and add these environment variables:
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret_key
 NODE_ENV=production
-FRONTEND_URL=your_frontend_url
 ```
 
 ### 2. Deploy from Backend Directory
@@ -40,10 +39,6 @@ Visit these URLs to test:
 - Verify MONGO_URI is correct
 - Test database connection locally first
 
-### CORS Issues
-- Update FRONTEND_URL to match your frontend deployment
-- Check CORS configuration in server.js
-
 ## Debugging
 
 1. **Check Vercel Logs**:
@@ -64,5 +59,4 @@ Visit these URLs to test:
 
 - `MONGO_URI` - MongoDB connection string
 - `JWT_SECRET` - Secret key for JWT tokens
-- `NODE_ENV` - Set to "production"
-- `FRONTEND_URL` - Your frontend URL for CORS 
+- `NODE_ENV` - Set to "production" 

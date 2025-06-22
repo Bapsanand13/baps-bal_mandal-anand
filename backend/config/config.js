@@ -7,8 +7,7 @@ const config = {
   // Server configuration
   server: {
     port: process.env.PORT || 5000,
-    nodeEnv: process.env.NODE_ENV || 'development',
-    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5174'
+    nodeEnv: process.env.NODE_ENV || 'development'
   },
 
   // Database configuration
@@ -18,8 +17,6 @@ const config = {
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
-      bufferMaxEntries: 0,
-      bufferCommands: false,
       useNewUrlParser: true,
       useUnifiedTopology: true
     }
@@ -71,8 +68,7 @@ const config = {
   // Security configuration
   security: {
     bcryptRounds: 10,
-    sessionSecret: process.env.SESSION_SECRET || 'your-session-secret',
-    corsOrigins: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:5174']
+    sessionSecret: process.env.SESSION_SECRET || 'your-session-secret'
   }
 };
 
