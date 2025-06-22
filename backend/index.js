@@ -1,24 +1,31 @@
-// Entry point for Render deployment
+// Entry point for deployment platforms
 import app from './server.js';
 
-// Export the app for serverless environments
+// Export the app for serverless environments (Vercel, etc.)
 export default app;
 
-// For traditional server environments, start the server
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  const startServer = (port) => {
-    const server = app.listen(port, () => {
-      console.log(`Server running on port ${port} in ${process.env.NODE_ENV || 'development'} mode`);
-    }).on('error', (err) => {
-      if (err.code === 'EADDRINUSE') {
-        console.log(`Port ${port} is busy, trying port ${port + 1}`);
-        startServer(port + 1);
-      } else {
-        console.error('Server error:', err);
-      }
-    });
-  };
-
+// Start server for traditional hosting (Render, Heroku, etc.)
+if (process.env.NODE_ENV === 'production' || process.env.PORT) {
   const port = process.env.PORT || 5000;
-  startServer(port);
+  
+  app.listen(port, () => {
+    console.log(`Server running on port ${port} in production mode`);
+  });
+}
+// Start server in local development
+else if (process.env.NODE_ENV === 'development') {
+  const port = process.env.PORT || 5000;
+  
+  app.listen(port, () => {
+    console.log(`Server running on port ${port} in development mode`);
+  }).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log(`Port ${port} is busy, trying port ${port + 1}`);
+      app.listen(port + 1, () => {
+        console.log(`Server running on port ${port + 1} in development mode`);
+      });
+    } else {
+      console.error('Server error:', err);
+    }
+  });
 } 

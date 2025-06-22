@@ -122,36 +122,19 @@ const startServer = async () => {
     } catch (dbError) {
       console.warn('Database connection failed, but continuing:', dbError.message);
     }
-    
-    // Start server only if not on Vercel
-    if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-      const port = process.env.PORT || 5000;
-      app.listen(port, () => {
-        console.log(`Server running on port ${port} in ${process.env.NODE_ENV || 'development'} mode`);
-      });
-    }
   } catch (error) {
     console.error('Failed to start server:', error);
-    if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-      process.exit(1);
-    }
   }
 };
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled Promise Rejection:', err);
-  if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-    process.exit(1);
-  }
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
-  if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-    process.exit(1);
-  }
 });
 
 // Start the server
