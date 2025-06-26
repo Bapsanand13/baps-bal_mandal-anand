@@ -23,7 +23,7 @@ async function killProcessOnPort(port) {
         }
       }
     }
-  } catch (error) {
+  } catch {
     // Process might not exist, which is fine
     console.log(`No process found on port ${port}`);
   }

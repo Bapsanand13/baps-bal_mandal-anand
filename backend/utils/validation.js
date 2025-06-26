@@ -15,7 +15,7 @@ export const validateRequest = (schema) => {
 // Common validation patterns
 export const validationPatterns = {
   email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  phone: /^[\+]?[1-9][\d]{0,15}$/,
+  phone: /^[+]?([1-9][\d]{0,15})$/,
   password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
   date: /^\d{4}-\d{2}-\d{2}$/,
   time: /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/

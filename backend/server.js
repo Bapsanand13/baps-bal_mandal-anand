@@ -19,7 +19,7 @@ import achievementRoutes from './routes/achievements.js';
 import { errorHandler, notFound } from './utils/errorHandler.js';
 
 // Import configuration
-import config from './config/config.js';
+// import config from './config/config.js';
 import { connectDB, healthCheck } from './config/database.js';
 
 const app = express();

@@ -12,7 +12,7 @@ export const protect = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
-  } catch (err) {
+  } catch (_) {
     return res.status(401).json({ message: 'Invalid token.' });
   }
 };
@@ -67,7 +67,7 @@ const auth = (roles = []) => {
         return res.status(403).json({ message: 'Forbidden: insufficient role.' });
       }
       next();
-    } catch (err) {
+    } catch (_) {
       return res.status(401).json({ message: 'Invalid token.' });
     }
   };
