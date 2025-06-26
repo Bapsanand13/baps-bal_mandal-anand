@@ -15,7 +15,15 @@
     "clean": "rm -rf logs/*",
     "logs": "tail -f logs/*.log"
   },
-  "keywords": ["baps", "bal-mandal", "community", "api", "nodejs", "express", "mongodb"],
+  "keywords": [
+    "baps",
+    "bal-mandal",
+    "community",
+    "api",
+    "nodejs",
+    "express",
+    "mongodb"
+  ],
   "author": "BAPS Bal Mandal Development Team",
   "license": "ISC",
   "description": "Backend API for BAPS Bal Mandal community platform",
@@ -36,6 +44,7 @@
     "xss-clean": "^0.1.4"
   },
   "devDependencies": {
+    "eslint": "^9.29.0",
     "nodemon": "^3.1.0"
   },
   "engines": {
