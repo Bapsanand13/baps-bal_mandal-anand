@@ -2,9 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
-import xss from 'xss-clean';
+import xss from 'xss';
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -32,8 +33,8 @@ const logRequest = (req, res, next) => {
 
 // Security middleware
 app.use(helmet());
+app.use(compression());
 app.use(mongoSanitize());
-app.use(xss());
 
 // Rate limiting
 const limiter = rateLimit({
@@ -87,6 +88,26 @@ app.use(cookieParser());
 
 // Request logging
 app.use(logRequest);
+
+// XSS sanitize middleware
+function sanitizeRequest(req, res, next) {
+  const sanitize = (value) => {
+    if (typeof value === 'string') {
+      return xss(value);
+    } else if (typeof value === 'object' && value !== null) {
+      for (const key in value) {
+        value[key] = sanitize(value[key]);
+      }
+      return value;
+    }
+    return value;
+  };
+  req.body = sanitize(req.body);
+  req.query = sanitize(req.query);
+  req.params = sanitize(req.params);
+  next();
+}
+app.use(sanitizeRequest);
 
 // Health check route
 app.get('/', (req, res) => {
