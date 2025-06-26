@@ -2,6 +2,12 @@ import mongoose from 'mongoose';
 import logger from '../utils/logger.js';
 import config, { validateConfig } from './config.js';
 
+// Global connection cache for serverless
+let cached = global.mongoose;
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
 // Database connection function
 export const connectDB = async () => {
   try {
@@ -26,40 +32,47 @@ export const connectDB = async () => {
       }
     }
 
-    // Connect to MongoDB
-    const conn = await mongoose.connect(MONGO_URI, connectOptions);
+    // Use cached connection if available
+    if (cached.conn) {
+      return cached.conn;
+    }
+    if (!cached.promise) {
+      cached.promise = mongoose.connect(MONGO_URI, connectOptions).then((mongoose) => mongoose);
+    }
+    cached.conn = await cached.promise;
+    logger.info(`MongoDB connected: ${cached.conn.connection.host}`);
     
-    logger.info(`MongoDB connected: ${conn.connection.host}`);
-    
-    // Handle connection events
-    mongoose.connection.on('error', (err) => {
-      logger.error('MongoDB connection error:', err);
-    });
+    // Handle connection events (only once)
+    if (!cached.conn._eventsSet) {
+      mongoose.connection.on('error', (err) => {
+        logger.error('MongoDB connection error:', err);
+      });
+      mongoose.connection.on('disconnected', () => {
+        logger.warn('MongoDB disconnected');
+      });
+      mongoose.connection.on('reconnected', () => {
+        logger.info('MongoDB reconnected');
+      });
+      cached.conn._eventsSet = true;
+    }
 
-    mongoose.connection.on('disconnected', () => {
-      logger.warn('MongoDB disconnected');
-    });
+    // Graceful shutdown (only in non-serverless)
+    if (!process.env.VERCEL) {
+      process.on('SIGINT', async () => {
+        logger.info('SIGINT received. Closing MongoDB connection...');
+        await mongoose.connection.close();
+        logger.info('MongoDB connection closed.');
+        process.exit(0);
+      });
+      process.on('SIGTERM', async () => {
+        logger.info('SIGTERM received. Closing MongoDB connection...');
+        await mongoose.connection.close();
+        logger.info('MongoDB connection closed.');
+        process.exit(0);
+      });
+    }
 
-    mongoose.connection.on('reconnected', () => {
-      logger.info('MongoDB reconnected');
-    });
-
-    // Graceful shutdown
-    process.on('SIGINT', async () => {
-      logger.info('SIGINT received. Closing MongoDB connection...');
-      await mongoose.connection.close();
-      logger.info('MongoDB connection closed.');
-      process.exit(0);
-    });
-
-    process.on('SIGTERM', async () => {
-      logger.info('SIGTERM received. Closing MongoDB connection...');
-      await mongoose.connection.close();
-      logger.info('MongoDB connection closed.');
-      process.exit(0);
-    });
-
-    return conn;
+    return cached.conn;
   } catch (error) {
     logger.error('Database connection failed:', error);
     if (process.env.VERCEL) {
