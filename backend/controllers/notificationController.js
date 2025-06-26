@@ -244,4 +244,54 @@ export const sendAnnouncement = async (req, res) => {
     console.error('Send announcement error:', error);
     res.status(500).json({ message: 'Server error' });
   }
+};
+
+// Send notification (Admin only)
+export const sendNotification = async (req, res) => {
+  try {
+    // Integrate with SMS/Push/Email here
+    res.json({ message: 'Notification sent (stub)' });
+  } catch (error) {
+    console.error('Send notification error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// List/filter notifications (Admin only)
+export const listNotifications = async (req, res) => {
+  try {
+    const { type, user, search, page = 1, limit = 20 } = req.query;
+    const filter = {};
+    if (type) filter.type = type;
+    if (user) filter.recipient = user;
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { message: { $regex: search, $options: 'i' } }
+      ];
+    }
+    const notifications = await Notification.find(filter)
+      .populate('recipient', 'name email')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+    const total = await Notification.countDocuments(filter);
+    res.json({ notifications, total, page: Number(page), limit: Number(limit) });
+  } catch (error) {
+    console.error('List notifications error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// User notifications (Admin/User)
+export const userNotifications = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const notifications = await Notification.find({ recipient: userId })
+      .sort({ createdAt: -1 });
+    res.json(notifications);
+  } catch (error) {
+    console.error('User notifications error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 }; 

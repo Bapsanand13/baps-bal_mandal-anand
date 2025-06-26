@@ -302,4 +302,70 @@ export const getPendingPosts = async (req, res) => {
     console.error('Get pending posts error:', error);
     res.status(500).json({ message: 'Server error' });
   }
+};
+
+// Approve post (Admin only)
+export const approvePost = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const post = await Post.findByIdAndUpdate(id, { status: 'approved' }, { new: true });
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+    res.json({ message: 'Post approved', post });
+  } catch (error) {
+    console.error('Approve post error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Reject post (Admin only)
+export const rejectPost = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const post = await Post.findByIdAndUpdate(id, { status: 'rejected', rejectionReason: reason }, { new: true });
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+    res.json({ message: 'Post rejected', post });
+  } catch (error) {
+    console.error('Reject post error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Mark as inappropriate (Admin only)
+export const markInappropriate = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const post = await Post.findByIdAndUpdate(id, { inappropriate: true }, { new: true });
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+    res.json({ message: 'Post marked as inappropriate', post });
+  } catch (error) {
+    console.error('Mark inappropriate error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// List/filter posts (Admin only)
+export const listPosts = async (req, res) => {
+  try {
+    const { status, user, search, page = 1, limit = 20 } = req.query;
+    const filter = {};
+    if (status) filter.status = status;
+    if (user) filter.author = user;
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } }
+      ];
+    }
+    const posts = await Post.find(filter)
+      .populate('author', 'name email')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+    const total = await Post.countDocuments(filter);
+    res.json({ posts, total, page: Number(page), limit: Number(limit) });
+  } catch (error) {
+    console.error('List posts error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 }; 

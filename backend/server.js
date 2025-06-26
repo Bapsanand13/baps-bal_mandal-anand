@@ -15,6 +15,8 @@ import postRoutes from './routes/posts.js';
 import notificationRoutes from './routes/notifications.js';
 import mentorRoutes from './routes/mentors.js';
 import achievementRoutes from './routes/achievements.js';
+import attendanceRoutes from './routes/attendance.js';
+import logsRoutes from './routes/logs.js';
 
 // Import utilities
 import { errorHandler, notFound } from './utils/errorHandler.js';
@@ -168,6 +170,8 @@ app.use('/api/posts', postRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/mentors', mentorRoutes);
 app.use('/api/achievements', achievementRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/logs', logsRoutes);
 
 // 404 handler
 app.use(notFound);

@@ -17,10 +17,26 @@ export const protect = (req, res, next) => {
   }
 };
 
-// Admin middleware - require admin role
+// Admin middleware - require admin or superadmin role
 export const admin = (req, res, next) => {
-  if (req.user.role !== 'admin') {
+  if (!['admin', 'superadmin'].includes(req.user.role)) {
     return res.status(403).json({ message: 'Forbidden: admin access required.' });
+  }
+  next();
+};
+
+// Volunteer middleware - require volunteer, admin, or superadmin role
+export const volunteer = (req, res, next) => {
+  if (!['volunteer', 'admin', 'superadmin'].includes(req.user.role)) {
+    return res.status(403).json({ message: 'Forbidden: volunteer access required.' });
+  }
+  next();
+};
+
+// SuperAdmin middleware - require superadmin role
+export const superAdmin = (req, res, next) => {
+  if (req.user.role !== 'superadmin') {
+    return res.status(403).json({ message: 'Forbidden: superadmin access required.' });
   }
   next();
 };

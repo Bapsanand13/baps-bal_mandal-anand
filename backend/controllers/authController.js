@@ -64,17 +64,50 @@ export const register = async (req, res) => {
 // @access  Public
 export const login = async (req, res) => {
   try {
+    console.log('Login attempt:', req.body);
     const { email, password } = req.body;
+    console.log('Received email:', email);
+    console.log('Received password:', password);
+    console.log('Env ADMIN_EMAIL:', process.env.ADMIN_EMAIL);
+    console.log('Env ADMIN_PASSWORD:', process.env.ADMIN_PASSWORD);
 
-    // Check if user exists
-    const user = await User.findOne({ email });
+    // Check if user exists in DB
+    let user = await User.findOne({ email });
     if (!user) {
+      console.log('No user found in DB, checking env admin...');
+      if (
+        process.env.ADMIN_EMAIL &&
+        process.env.ADMIN_PASSWORD &&
+        email === process.env.ADMIN_EMAIL &&
+        password === process.env.ADMIN_PASSWORD
+      ) {
+        console.log('Env admin credentials matched!');
+        // Return a fake user object for admin
+        const adminUser = {
+          _id: 'env-admin',
+          name: 'Super Admin',
+          email: process.env.ADMIN_EMAIL,
+          role: 'superadmin',
+        };
+        const token = jwt.sign(
+          { userId: adminUser._id, role: adminUser.role },
+          process.env.JWT_SECRET,
+          { expiresIn: '7d' }
+        );
+        return res.json({
+          message: 'Login successful',
+          token,
+          user: adminUser
+        });
+      }
+      console.log('Env admin credentials did NOT match.');
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      console.log('Password did not match for DB user.');
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
@@ -110,7 +143,18 @@ export const login = async (req, res) => {
 // @access  Private
 export const getMe = async (req, res) => {
   try {
+    console.log('getMe: req.user =', req.user);
+    if (req.user.userId === 'env-admin') {
+      // Return env-admin user object
+      return res.json({
+        _id: 'env-admin',
+        name: 'Super Admin',
+        email: process.env.ADMIN_EMAIL,
+        role: 'superadmin',
+      });
+    }
     const user = await User.findById(req.user.userId).select('-password');
+    console.log('getMe: found user =', user);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }

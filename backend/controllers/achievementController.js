@@ -166,4 +166,65 @@ export const getRecentAchievements = async (req, res) => {
     console.error('Get recent achievements error:', error);
     res.status(500).json({ message: 'Server error' });
   }
+};
+
+// @desc    Verify achievement (Admin only)
+// @route   PUT /api/achievements/:id/verify
+// @access  Private/Admin
+export const verifyAchievement = async (req, res) => {
+  try {
+    const achievement = await Achievement.findByIdAndUpdate(
+      req.params.id,
+      { isActive: true },
+      { new: true }
+    )
+      .populate('createdBy', 'name')
+      .populate('participants.userId', 'name');
+    if (!achievement) {
+      return res.status(404).json({ message: 'Achievement not found' });
+    }
+    res.json({ message: 'Achievement verified', achievement });
+  } catch (error) {
+    console.error('Verify achievement error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Reject achievement (Admin only)
+// @route   PUT /api/achievements/:id/reject
+// @access  Private/Admin
+export const rejectAchievement = async (req, res) => {
+  try {
+    const achievement = await Achievement.findByIdAndUpdate(
+      req.params.id,
+      { isActive: false },
+      { new: true }
+    )
+      .populate('createdBy', 'name')
+      .populate('participants.userId', 'name');
+    if (!achievement) {
+      return res.status(404).json({ message: 'Achievement not found' });
+    }
+    res.json({ message: 'Achievement rejected', achievement });
+  } catch (error) {
+    console.error('Reject achievement error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Get achievements for a specific user
+// @route   GET /api/achievements/user/:userId
+// @access  Private/Admin
+export const userAchievements = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const achievements = await Achievement.find({ 'participants.userId': userId })
+      .populate('createdBy', 'name')
+      .populate('participants.userId', 'name')
+      .sort({ date: -1 });
+    res.json(achievements);
+  } catch (error) {
+    console.error('User achievements error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 }; 

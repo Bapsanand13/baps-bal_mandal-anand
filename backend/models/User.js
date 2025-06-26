@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
   guardianName: { type: String, required: true },
   phone: { type: String, required: true },
   photo: { type: String, default: '' }, 
-  role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  role: { type: String, enum: ['superadmin', 'admin', 'volunteer', 'user'], default: 'user' },
 }, { timestamps: true });
 
 export default mongoose.model('User', userSchema); 

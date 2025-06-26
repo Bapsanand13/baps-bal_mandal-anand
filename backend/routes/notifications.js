@@ -8,7 +8,10 @@ import {
   markAsRead,
   markAllAsRead,
   getUnreadCount,
-  sendAnnouncement
+  sendAnnouncement,
+  sendNotification,
+  listNotifications,
+  userNotifications
 } from '../controllers/notificationController.js';
 import { protect, admin } from '../middleware/auth.js';
 
@@ -24,6 +27,9 @@ router.put('/read-all', protect, markAllAsRead);
 // Admin routes
 router.post('/', protect, admin, createNotification);
 router.post('/announcement', protect, admin, sendAnnouncement);
+router.post('/send', protect, admin, sendNotification);
+router.get('/list', protect, admin, listNotifications);
+router.get('/user/:userId', protect, admin, userNotifications);
 router.put('/:id', protect, admin, updateNotification);
 router.delete('/:id', protect, admin, deleteNotification);
 

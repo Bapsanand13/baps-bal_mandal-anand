@@ -6,7 +6,10 @@ import {
   updateEvent,
   deleteEvent,
   rsvpEvent,
-  cancelRsvp
+  cancelRsvp,
+  sendEventReminder,
+  eventParticipationStats,
+  exportEventAttendance
 } from '../controllers/eventController.js';
 import { protect, admin } from '../middleware/auth.js';
 
@@ -24,5 +27,8 @@ router.delete('/:id/rsvp', protect, cancelRsvp);
 router.post('/', protect, admin, createEvent);
 router.put('/:id', protect, admin, updateEvent);
 router.delete('/:id', protect, admin, deleteEvent);
+router.post('/reminder', protect, admin, sendEventReminder);
+router.get('/stats/participation', protect, admin, eventParticipationStats);
+router.get('/export/attendance', protect, admin, exportEventAttendance);
 
 export default router; 

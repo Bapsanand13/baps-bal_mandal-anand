@@ -220,4 +220,45 @@ export const cancelRsvp = async (req, res) => {
     console.error('Cancel RSVP error:', error);
     res.status(500).json({ message: 'Server error' });
   }
+};
+
+// Send event reminder (stub)
+export const sendEventReminder = async (req, res) => {
+  try {
+    // Integrate with notification system (SMS/Push/Email)
+    res.json({ message: 'Event reminder sent (stub)' });
+  } catch (error) {
+    console.error('Send event reminder error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Event participation stats (for dashboard)
+export const eventParticipationStats = async (req, res) => {
+  try {
+    const events = await Event.find();
+    const stats = events.map(event => ({
+      eventId: event._id,
+      title: event.title,
+      date: event.date,
+      totalAttendees: event.attendees.length
+    }));
+    res.json(stats);
+  } catch (error) {
+    console.error('Event participation stats error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Export event attendance (CSV/Excel-ready JSON)
+export const exportEventAttendance = async (req, res) => {
+  try {
+    const { eventId } = req.query;
+    const event = await Event.findById(eventId).populate('attendees', 'name email mandal');
+    if (!event) return res.status(404).json({ message: 'Event not found' });
+    res.json({ event: event.title, date: event.date, attendees: event.attendees });
+  } catch (error) {
+    console.error('Export event attendance error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 }; 
